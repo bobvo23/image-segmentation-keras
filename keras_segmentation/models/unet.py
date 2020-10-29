@@ -68,27 +68,41 @@ def unet_mini(n_classes, input_height=360, input_width=480):
 
 def _unet(n_classes, encoder, l1_skip_conn=True, input_height=416,
           input_width=608):
-
+    '''
+    Creating a decoder for the input encoder
+    encoder input:
+        - image_input size
+        - 5 stages of poolings
+        
+    Return: model: end to end
+    '''
     img_input, levels = encoder(
         input_height=input_height, input_width=input_width)
+
+    # toclarify: every unet have 5 stages?
+
+    # populate 5 CNN stages from the input encoder
     [f1, f2, f3, f4, f5] = levels
 
     o = f4
 
     o = (ZeroPadding2D((1, 1), data_format=IMAGE_ORDERING))(o)
-    o = (Conv2D(512, (3, 3), padding='valid' , activation='relu' , data_format=IMAGE_ORDERING))(o)
+    o = (Conv2D(512, (3, 3), padding='valid',  activation='relu' , data_format=IMAGE_ORDERING))(o)
     o = (BatchNormalization())(o)
 
     o = (UpSampling2D((2, 2), data_format=IMAGE_ORDERING))(o)
     o = (concatenate([o, f3], axis=MERGE_AXIS))
+
     o = (ZeroPadding2D((1, 1), data_format=IMAGE_ORDERING))(o)
-    o = (Conv2D(256, (3, 3), padding='valid', activation='relu' , data_format=IMAGE_ORDERING))(o)
+    o = (Conv2D(256, (3, 3), padding='valid',
+                activation='relu', data_format=IMAGE_ORDERING))(o)
     o = (BatchNormalization())(o)
 
     o = (UpSampling2D((2, 2), data_format=IMAGE_ORDERING))(o)
     o = (concatenate([o, f2], axis=MERGE_AXIS))
     o = (ZeroPadding2D((1, 1), data_format=IMAGE_ORDERING))(o)
-    o = (Conv2D(128, (3, 3), padding='valid' , activation='relu' , data_format=IMAGE_ORDERING))(o)
+    o = (Conv2D(128, (3, 3), padding='valid',
+                activation='relu', data_format=IMAGE_ORDERING))(o)
     o = (BatchNormalization())(o)
 
     o = (UpSampling2D((2, 2), data_format=IMAGE_ORDERING))(o)
@@ -97,7 +111,8 @@ def _unet(n_classes, encoder, l1_skip_conn=True, input_height=416,
         o = (concatenate([o, f1], axis=MERGE_AXIS))
 
     o = (ZeroPadding2D((1, 1), data_format=IMAGE_ORDERING))(o)
-    o = (Conv2D(64, (3, 3), padding='valid', activation='relu', data_format=IMAGE_ORDERING))(o)
+    o = (Conv2D(64, (3, 3), padding='valid',
+                activation='relu', data_format=IMAGE_ORDERING))(o)
     o = (BatchNormalization())(o)
 
     o = Conv2D(n_classes, (3, 3), padding='same',
@@ -114,6 +129,8 @@ def unet(n_classes, input_height=416, input_width=608, encoder_level=3):
                   input_height=input_height, input_width=input_width)
     model.model_name = "unet"
     return model
+
+# toclarify: encoder_level=3 is not utilized, shall we delete it
 
 
 def vgg_unet(n_classes, input_height=416, input_width=608, encoder_level=3):

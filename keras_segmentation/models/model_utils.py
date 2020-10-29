@@ -65,13 +65,21 @@ def resize_image(inp,  s, data_format):
 
 
 def get_segmentation_model(input, output):
+    '''
+    Get the final model after building the encoder and the decoder
+    Input:
+        - Input:
+        - Output:
+    '''
 
     img_input = input
     o = output
+    print("********** Get segmentation model **********")
+    print(f"Input img_input {input.shape} and output {output.shape}")
 
     o_shape = Model(img_input, o).output_shape
     i_shape = Model(img_input, o).input_shape
-
+    print(f"Input img_input {i_shape} and output {o_shape}")
     if IMAGE_ORDERING == 'channels_first':
         output_height = o_shape[2]
         output_width = o_shape[3]
