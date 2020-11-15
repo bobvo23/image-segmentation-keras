@@ -4,6 +4,10 @@ from .data_utils.data_loader import image_segmentation_generator, \
 import glob
 import six
 from keras.callbacks import Callback
+import tensorflow as tf
+import os
+import datetime
+from packaging import version
 
 
 def find_latest_checkpoint(checkpoints_path, fail_safe=True):
@@ -13,7 +17,9 @@ def find_latest_checkpoint(checkpoints_path, fail_safe=True):
 
     # Get all matching files
     all_checkpoint_files = glob.glob(checkpoints_path + ".*")
-    all_checkpoint_files = [ ff.replace(".index" , "" ) for ff in all_checkpoint_files ] # to make it work for newer versions of keras
+    # to make it work for newer versions of keras
+    all_checkpoint_files = [ff.replace(".index", "")
+                            for ff in all_checkpoint_files]
     # Filter out entries where the epoc_number part is pure number
     all_checkpoint_files = list(filter(lambda f: get_epoch_number_from_path(f)
                                        .isdigit(), all_checkpoint_files))
@@ -89,6 +95,13 @@ def train(model,
     output_height = model.output_height
     output_width = model.output_width
 
+    # tensorboard
+    print("Generating Tensorboard Logs")
+    logdir = os.path.join(
+        "logs", datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
+
+    tensorboard_callback = tf.keras.callbacks.TensorBoard(
+        logdir, histogram_freq=1)
     if validate:
         assert val_images is not None
         assert val_annotations is not None
@@ -150,7 +163,8 @@ def train(model,
             n_classes, input_height, input_width, output_height, output_width)
 
     callbacks = [
-        CheckpointsCallback(checkpoints_path)
+        CheckpointsCallback(checkpoints_path),
+        tensorboard_callback
     ]
 
     if not validate:
@@ -163,3 +177,4 @@ def train(model,
                             validation_steps=val_steps_per_epoch,
                             epochs=epochs, callbacks=callbacks,
                             use_multiprocessing=gen_use_multiprocessing)
+    return logdir
